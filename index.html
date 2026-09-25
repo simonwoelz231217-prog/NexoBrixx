@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NexoBrix XXL JS - Ultimate</title>
+    
+    <!-- Stylische Gaming-Fonts von Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            background-color: #0c0c1d;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Fredoka', 'Segoe UI', sans-serif;
+        }
+        canvas {
+            max-height: 98vh;
+            max-width: 98vw;
+            height: auto;
+            width: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            border-radius: 20px;
+            cursor: pointer;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="600" height="1300"></canvas>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', async function() {
+            if (window.CrazyGames && window.CrazyGames.SDK) {
+                try {
+                    await window.CrazyGames.SDK.init();
+                    window.CrazyGames.SDK.game.loadingStop();
+                    window.CrazyGames.SDK.game.gameplayStart();
+                } catch (e) {
+                    console.log("SDK Init Fehler:", e);
+                }
+            }
+        });
+
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const GRID_SIZE = 8;
+        const FONT_TITLE = "'Lilita One', cursive, sans-serif";
+        const FONT_UI = "'Fredoka', 'Segoe UI', sans-serif";
+
+        let currentLang = "de";
+        let isLandscape = false; 
+
+        const TRANSLATIONS = {
+            de: {
+                adventure: "ADVENTURE",
+                adventureSub: "Karte (Max Level: {lvl})",
+                classic: "CLASSIC",
+                classicSub: "Endlos-Puzzle Modus",
+                timed: "ZEITMODUS",
+                timedSub: "Challenge mit Zeitlimit",
+                shop: "SHOP",
+                shopSub: "Skins & Upgrades",
+                achievements: "ERFOLGE",
+                achievementsSub: "Trophäen & Belohnungen",
+                wheel: "GLÜCKSRAD 🎡",
+                wheelSubReady: "Jetzt tippen zum Drehen!",
+                wheelSubWait: "Morgen wieder bereit",
+                backMenu: "◀ MENÜ",
+                backMap: "◀ KARTE",
+                classicHigh: "🏆 Classic",
+                timedHigh: "⏱️ Zeit",
+                musicOn: "🎵 Musik: AN",
+                musicOff: "🔇 Musik: AUS",
+                orientPort: "📱 Modus: Hochformat",
+                orientLand: "💻 Modus: Querformat",
+                rotate: "DREHEN",
+                shuffle: "SHUFFLE",
+                clear2: "-2 REI.",
+                tnt: "TNT",
+                laser: "LASER",
+                gameOver: "GAME OVER",
+                timeUp: "Zeit abgelaufen!",
+                noMoves: "Keine Züge mehr möglich",
+                watchAd: "🎬 Video ansehen (Gratis)",
+                reviveCoins: "🪙 Für 100 Coins weiterleben",
+                restart: "Neu starten",
+                levelCleared: "GESCHAFFT!",
+                levelDone: "Level {lvl} gemeistert!",
+                tapNext: "Tippe für Nächstes Level",
+                shopTitle: "SUPER SHOP",
+                achievementsTitle: "ERFOLGE & TROPHÄEN",
+                mapTitle: "ADVENTURE KARTE",
+                wheelTitle: "TÄGLICHES GLÜCKSRAD",
+                spinBtn: "RAD DREHEN!",
+                spinning: "Es dreht sich...",
+                alreadySpun: "Bereits gedreht heute!",
+                comeBack: "Komm morgen wieder.",
+                wonCoins: "Gewonnen: +{val} Coins! 🎉",
+                active: "AKTIV",
+                select: "AUSWÄHLEN",
+                buy: "KAUFEN",
+                claimed: "ABGEHOLT",
+                locked: "GESPERRT",
+                rows: "Reihen",
+                jewels: "Juwelen",
+                time: "Zeit",
+                noCoins: "Zu wenig Coins!",
+                noSlot: "Kein Slot frei!",
+                shuffled: "NEU GEWÜRFELT!",
+                rowsCleared: "-2 REIHEN GELÖSCHT!",
+                tntBought: "TNT GEKAUFT!",
+                laserBought: "LASER GEKAUFT!",
+                unlockedTheme: "SKIN FREIGESCHALTET!",
+                unlockedUpgrade: "UPGRADE GEKAUFT!",
+                revived: "WEITERGELEBT!",
+                noAd: "Keine Werbung verfügbar!",
+                rotateInstruction: "Wähle Block zum Drehen!",
+                rotateOff: "Drehen aus",
+                rotatedText: "GEDREHT!",
+                streakText: "🔥 Streak: Tag {day} (Multiplikator: x{multi})",
+                shopTabSkins: "🎨 SKINS",
+                shopTabUpgrades: "⚡ UPGRADES",
+                pageText: "Seite {cur} / {max}",
+                upgrade_startTnt: "TNT-Start Booster",
+                upgrade_startTntSub: "Jedes Spiel mit 1x TNT im Slot starten",
+                upgrade_extraTime: "Zeit-Booster (+10s)",
+                upgrade_extraTimeSub: "Erhöht Startzeit im Zeitmodus",
+                upgrade_doubleCoins: "Münz-Verdoppler (2x)",
+                upgrade_doubleCoinsSub: "Verdoppelt dauerhaft alle erspielten Coins!",
+                upgrade_starParticles: "Glitzer-Partikel",
+                upgrade_starParticlesSub: "Magischer Sternenstaub beim Abräumen",
+                ach_pts: "10.000 Gesamt-Punkte",
+                ach_pts_50k: "50.000 Punkt-Gigant",
+                ach_lines: "100 Reihen abgeräumt",
+                ach_lines_250: "250 Reihen-Abräumer",
+                ach_games: "20 Spiele absolviert",
+                ach_blocks: "500 Blöcke platziert",
+                ach_combos: "15 Mehrfach-Combos",
+                ach_boosters: "25 Booster benutzt",
+                ach_wheel: "5x Glücksrad gedreht",
+                ach_adv_lvl5: "Adventure Level 5",
+                ach_adv_lvl15: "Adventure Champion (Lvl 15)",
+                ach_adv_lvl30: "Adventure Legend (Lvl 30)"
+            },
+            en: {
+                adventure: "ADVENTURE",
+                adventureSub: "Map (Max Level: {lvl})",
+                classic: "CLASSIC",
+                classicSub: "Endless Puzzle Mode",
+                timed: "TIMED MODE",
+                timedSub: "Time Limit Challenge",
+                shop: "SHOP",
+                shopSub: "Skins & Upgrades",
+                achievements: "ACHIEVEMENTS",
+                achievementsSub: "Trophies & Rewards",
+                wheel: "LUCKY WHEEL 🎡",
+                wheelSubReady: "Tap to spin now!",
+                wheelSubWait: "Available tomorrow",
+                backMenu: "◀ MENU",
+                backMap: "◀ MAP",
+                classicHigh: "🏆 Classic",
+                timedHigh: "⏱️ Timed",
+                musicOn: "🎵 Music: ON",
+                musicOff: "🔇 Music: OFF",
+                orientPort: "📱 Mode: Portrait",
+                orientLand: "💻 Mode: Landscape",
+                rotate: "ROTATE",
+                shuffle: "SHUFFLE",
+                clear2: "-2 ROWS",
+                tnt: "TNT",
+                laser: "LASER",
+                gameOver: "GAME OVER",
+                timeUp: "Time is up!",
+                noMoves: "No more moves available",
+                watchAd: "🎬 Watch Video (Free)",
+                reviveCoins: "🪙 Revive for 100 Coins",
+                restart: "Restart",
+                levelCleared: "CLEARED!",
+                levelDone: "Level {lvl} completed!",
+                tapNext: "Tap for Next Level",
+                shopTitle: "SUPER SHOP",
+                achievementsTitle: "ACHIEVEMENTS & TROPHIES",
+                mapTitle: "ADVENTURE MAP",
+                wheelTitle: "DAILY LUCKY WHEEL",
+                spinBtn: "SPIN WHEEL!",
+                spinning: "Spinning...",
+                alreadySpun: "Already spun today!",
+                comeBack: "Come back tomorrow.",
+                wonCoins: "Won: +{val} Coins! 🎉",
+                active: "ACTIVE",
+                select: "SELECT",
+                buy: "BUY",
+                claimed: "CLAIMED",
+                locked: "LOCKED",
+                rows: "Rows",
+                jewels: "Jewels",
+                time: "Time",
+                noCoins: "Not enough coins!",
+                noSlot: "No free slot!",
+                shuffled: "SHUFFLED!",
+                rowsCleared: "-2 ROWS CLEARED!",
+                tntBought: "TNT BOUGHT!",
+                laserBought: "LASER BOUGHT!",
+                unlockedTheme: "SKIN UNLOCKED!",
+                unlockedUpgrade: "UPGRADE BOUGHT!",
+                revived: "REVIVED!",
+                noAd: "No ad available!",
+                rotateInstruction: "Select block to rotate!",
+                rotateOff: "Rotate off",
+                rotatedText: "ROTATED!",
+                streakText: "🔥 Streak: Day {day} (Multiplier: x{multi})",
+                shopTabSkins: "🎨 SKINS",
+                shopTabUpgrades: "⚡ UPGRADES",
+                pageText: "Page {cur} / {max}",
+                upgrade_startTnt: "TNT Start Booster",
+                upgrade_startTntSub: "Start every game with 1x TNT in slot",
+                upgrade_extraTime: "Time Booster (+10s)",
+                upgrade_extraTimeSub: "Increases start time in timed mode",
+                upgrade_doubleCoins: "Double Coins (2x)",
+                upgrade_doubleCoinsSub: "Permanently doubles all earned coins!",
+                upgrade_starParticles: "Glitter Particles",
+                upgrade_starParticlesSub: "Magical stardust effect when clearing",
+                ach_pts: "10,000 Total Points",
+                ach_pts_50k: "50,000 Score Giant",
+                ach_lines: "100 Lines Cleared",
+                ach_lines_250: "250 Line Master",
+                ach_games: "20 Games Played",
+                ach_blocks: "500 Blocks Placed",
+                ach_combos: "15 Multi-Combos",
+                ach_boosters: "25 Boosters Used",
+                ach_wheel: "5 Wheel Spins",
+                ach_adv_lvl5: "Adventure Level 5",
+                ach_adv_lvl15: "Adventure Champion (Lvl 15)",
+                ach_adv_lvl30: "Adventure Legend (Lvl 30)"
+            }
+        };
+
+        function t(key, vars = {}) {
+            let text = (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.de[key] || key;
+            for (let v in vars) {
+                text = text.replace(`{${v}}`, vars[v]);
+            }
+            return text;
+        }
+
+        const THEME = {
+            bg: "#161632",
+            grid_empty: "#222246",
+            text: "#FFFFFF",
+            card_bg: "#2A2A5C",
+            card_border: "#43438E"
+        };
+
+        const THEME_PALETTES = {
+            classic: { name: "Classic Neon", colors: ["#38BDF8", "#FACC15", "#A855F7", "#22C55E", "#EF4444", "#F97316", "#EC4899"], unlocked: true, cost: 0 },
+            cyberpunk: { name: "Cyberpunk", colors: ["#06B6D4", "#E11D48", "#8B5CF6", "#10B981", "#F59E0B", "#6366F1", "#EC4899"], unlocked: false, cost: 200 },
+            emerald: { name: "Emerald Forest", colors: ["#34D399", "#059669", "#10B981", "#6EE7B7", "#047857", "#065F46", "#A7F3D0"], unlocked: false, cost: 300 },
+            sunset: { name: "Sunset Candy", colors: ["#FB7185", "#F43F5E", "#FB923C", "#FBBF24", "#C084FC", "#E879F9", "#FDA4AF"], unlocked: false, cost: 400 },
+            synthwave: { name: "Synthwave 80s", colors: ["#FF007F", "#00F0FF", "#7000FF", "#FFB800", "#00FF66", "#FF0055", "#9D00FF"], unlocked: false, cost: 350 },
+            pastel: { name: "Pastel Dream", colors: ["#F472B6", "#38BDF8", "#4ADE80", "#FBBF24", "#C084FC", "#FB7185", "#818CF8"], unlocked: false, cost: 450 },
+            gold: { name: "Royal Gold", colors: ["#FACC15", "#EAB308", "#CA8A04", "#FEF08A", "#B45309", "#78350F", "#FDE047"], unlocked: false, cost: 600 },
+            obsidian: { name: "Obsidian Lava", colors: ["#EF4444", "#F97316", "#1E293B", "#DC2626", "#B91C1C", "#F59E0B", "#475569"], unlocked: false, cost: 800 }
+        };
+
+        let activeThemeKey = "classic";
+        let arcadeBlockColors = THEME_PALETTES.classic.colors;
+
+        const BASE_SHAPES = [
+            [[0, 0]],
+            [[0, 0], [1, 0]],
+            [[0, 0], [0, 1]],
+            [[0, 0], [1, 0], [2, 0]],
+            [[0, 0], [0, 1], [0, 2]],
+            [[0, 0], [1, 0], [2, 0], [3, 0]],
+            [[0, 0], [0, 1], [0, 2], [0, 3]],
+            [[0, 0], [1, 0], [0, 1], [1, 1]],
+            [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]],
+            [[0, 0], [0, 1], [0, 2], [1, 2]],
+            [[1, 0], [1, 1], [1, 2], [0, 2]],
+            [[0, 0], [1, 0], [2, 0], [1, 1]],
+            [[0, 0], [1, 0], [1, 1], [2, 1]],
+            [[0, 0], [1, 0], [0, 1]],
+            [[0, 0], [1, 1]],
+            [[0, 0], [1, 1], [2, 2]],
+            [[0, 0], [1, 1], [0, 1]]
+        ];
+
+        let gameState = "MENU"; 
+        let currentMode = "CLASSIC";
+        let selectedAdvLevel = 1;
+        
+        let grid = Array(8).fill(null).map(() => Array(8).fill(null));
+        let score = 0;
+        let highscore = 0;
+        let highscoreZeit = 0;
+        let coins = 300;
+        let maxAdvLevel = 1;
+        let unlockedThemes = ["classic"];
+
+        let shopTab = "skins";
+        let shopPage = 0;
+        let achPage = 0;
+        let mapPage = 0;
+
+        let shopUpgrades = {
+            startTnt: false,
+            extraTime: false,
+            doubleCoins: false,
+            starParticles: false
+        };
+
+        let lastDailyClaim = "";
+        let dailyStreak = 1;
+
+        let stats = {
+            totalScore: 0,
+            totalLinesCleared: 0,
+            totalGamesPlayed: 0,
+            totalBlocksPlaced: 0,
+            totalCombos: 0,
+            boostersUsed: 0,
+            wheelSpins: 0
+        };
+        
+        let achievements = {
+            pts: { target: 10000, reward: 500, claimed: false },
+            pts_50k: { target: 50000, reward: 1000, claimed: false },
+            lines: { target: 100, reward: 400, claimed: false },
+            lines_250: { target: 250, reward: 800, claimed: false },
+            games: { target: 20, reward: 300, claimed: false },
+            blocks: { target: 500, reward: 300, claimed: false },
+            combos: { target: 15, reward: 500, claimed: false },
+            boosters: { target: 25, reward: 600, claimed: false },
+            wheel: { target: 5, reward: 400, claimed: false },
+            adv_lvl5: { target: 5, reward: 500, claimed: false },
+            adv_lvl15: { target: 15, reward: 1500, claimed: false },
+            adv_lvl30: { target: 30, reward: 3000, claimed: false }
+        };
+
+        let wheelSlices = [50, 100, 150, 200, 250, 300, 150, 500];
+        let wheelAngle = 0;
+        let wheelSpinning = false;
+        let wheelVelocity = 0;
+        let wheelResult = null;
+        let wheelBaseWin = 0;
+
+        let timeLeft = 35.0;
+        let gameOver = false;
+        let levelComplete = false;
+        
+        let advTargetLines = 6;
+        let advLinesCleared = 0;
+        let advLevelType = "lines";
+        let advJewelsTotal = 0;
+        let advJewelsCollected = 0;
+
+        let current_blocks = [null, null, null];
+        let selected_block_idx = null;
+        let dragging = false;
+        let block_x = 0, block_y = 0;
+        let lastTime = performance.now();
+
+        let particles = [];
+        let menuParticles = [];
+        let floatingTexts = [];
+        let shakeIntensity = 0;
+        let screenFlash = 0;
+        let rotateModeActive = false;
+        let musicEnabled = false;
+
+        function applyCanvasDimensions() {
+            if (isLandscape) {
+                canvas.width = 1300;
+                canvas.height = 600;
+                canvas.style.aspectRatio = "1300 / 600";
+            } else {
+                canvas.width = 600;
+                canvas.height = 1300;
+                canvas.style.aspectRatio = "600 / 1300";
+            }
+        }
+
+        function getGridParams() {
+            if (isLandscape) {
+                return { cellSize: 58, gap: 5, offsetX: 45, offsetY: 80 };
+            }
+            return { cellSize: 65, gap: 6, offsetX: 19, offsetY: 175 };
+        }
+
+        function getSlotRects() {
+            if (isLandscape) {
+                return [
+                    { x: 580, y: 100, w: 215, h: 220 },
+                    { x: 815, y: 100, w: 215, h: 220 },
+                    { x: 1050, y: 100, w: 215, h: 220 }
+                ];
+            }
+            return [
+                { x: 15, y: 830, w: 180, h: 220 },
+                { x: 210, y: 830, w: 180, h: 220 },
+                { x: 405, y: 830, w: 180, h: 220 }
+            ];
+        }
+
+        function getBoosterRects() {
+            if (isLandscape) {
+                return [
+                    { x: 580, y: 350, w: 125, h: 220, type: "rotate", cost: 50, labelKey: "rotate" },
+                    { x: 720, y: 350, w: 125, h: 220, type: "shuffle", cost: 40, labelKey: "shuffle" },
+                    { x: 860, y: 350, w: 125, h: 220, type: "clear2", cost: 100, labelKey: "clear2" },
+                    { x: 1000, y: 350, w: 125, h: 220, type: "tnt", cost: 120, labelKey: "tnt" },
+                    { x: 1140, y: 350, w: 125, h: 220, type: "laser", cost: 120, labelKey: "laser" }
+                ];
+            }
+            return [
+                { x: 15, y: 1075, w: 104, h: 200, type: "rotate", cost: 50, labelKey: "rotate" },
+                { x: 127, y: 1075, w: 104, h: 200, type: "shuffle", cost: 40, labelKey: "shuffle" },
+                { x: 239, y: 1075, w: 104, h: 200, type: "clear2", cost: 100, labelKey: "clear2" },
+                { x: 351, y: 1075, w: 104, h: 200, type: "tnt", cost: 120, labelKey: "tnt" },
+                { x: 463, y: 1075, w: 104, h: 200, type: "laser", cost: 120, labelKey: "laser" }
+            ];
+        }
+
+        for (let i = 0; i < 25; i++) {
+            menuParticles.push({
+                x: Math.random() * 1300,
+                y: Math.random() * 1300,
+                r: Math.random() * 3 + 1,
+                vy: - (Math.random() * 0.8 + 0.2),
+                alpha: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        const BTN_BACK = { x: 25, y: 25, w: 100, h: 40 };
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(freq, duration, type = 'sine') {
+            try {
+                initAudio();
+                if (navigator.vibrate) navigator.vibrate(15);
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playClearSound(lines) {
+            try {
+                initAudio();
+                if (navigator.vibrate) navigator.vibrate(20 * lines);
+
+                let notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+                let noteCount = Math.min(1 + lines * 2, notes.length);
+                let startTime = audioCtx.currentTime;
+
+                for (let i = 0; i < noteCount; i++) {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = (lines >= 3) ? 'triangle' : 'sine';
+                    let noteTime = startTime + i * 0.055;
+                    let noteDur = 0.18;
+
+                    osc.frequency.setValueAtTime(notes[i], noteTime);
+                    osc.frequency.exponentialRampToValueAtTime(notes[i] * 1.06, noteTime + noteDur);
+
+                    gain.gain.setValueAtTime(0.15, noteTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + noteDur);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(noteTime);
+                    osc.stop(noteTime + noteDur);
+                }
+            } catch (e) {}
+        }
+
+        let musicInterval = null;
+        let musicStep = 0;
+        const MELODY_NOTES = [
+            { freq: 220, bass: 110, dur: 0.4 }, { freq: 329.63, dur: 0.2 }, { freq: 392.00, dur: 0.2 }, { freq: 440, dur: 0.3 },
+            { freq: 329.63, dur: 0.2 }, { freq: 261.63, dur: 0.3 }, { freq: 392.00, dur: 0.2 }, { freq: 329.63, dur: 0.2 },
+            { freq: 174.61, bass: 87.31, dur: 0.4 }, { freq: 261.63, dur: 0.2 }, { freq: 329.63, dur: 0.2 }, { freq: 349.23, dur: 0.3 },
+            { freq: 261.63, dur: 0.2 }, { freq: 220, dur: 0.3 }, { freq: 329.63, dur: 0.2 }, { freq: 261.63, dur: 0.2 },
+            { freq: 261.63, bass: 130.81, dur: 0.4 }, { freq: 329.63, dur: 0.2 }, { freq: 392.00, dur: 0.2 }, { freq: 523.25, dur: 0.3 },
+            { freq: 392.00, dur: 0.2 }, { freq: 329.63, dur: 0.3 }, { freq: 440, dur: 0.2 }, { freq: 392.00, dur: 0.2 },
+            { freq: 196.00, bass: 98.00, dur: 0.4 }, { freq: 246.94, dur: 0.2 }, { freq: 293.66, dur: 0.2 }, { freq: 392.00, dur: 0.3 },
+            { freq: 293.66, dur: 0.2 }, { freq: 246.94, dur: 0.3 }, { freq: 349.23, dur: 0.2 }, { freq: 293.66, dur: 0.2 }
+        ];
+
+        function playMusicStep() {
+            if (!musicEnabled || !audioCtx) return;
+            try {
+                let note = MELODY_NOTES[musicStep % MELODY_NOTES.length];
+                let t = audioCtx.currentTime;
+
+                if (note.freq) {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(note.freq, t);
+                    gain.gain.setValueAtTime(0.025, t);
+                    gain.gain.exponentialRampToValueAtTime(0.0005, t + note.dur);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(t);
+                    osc.stop(t + note.dur);
+                }
+
+                if (note.bass) {
+                    let bassOsc = audioCtx.createOscillator();
+                    let bassGain = audioCtx.createGain();
+                    bassOsc.type = 'triangle';
+                    bassOsc.frequency.setValueAtTime(note.bass, t);
+                    bassGain.gain.setValueAtTime(0.035, t);
+                    bassGain.gain.exponentialRampToValueAtTime(0.0005, t + 0.8);
+                    bassOsc.connect(bassGain);
+                    bassGain.connect(audioCtx.destination);
+                    bassOsc.start(t);
+                    bassOsc.stop(t + 0.8);
+                }
+
+                musicStep++;
+            } catch(e) {}
+        }
+
+        function toggleBackgroundMusic() {
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                initAudio();
+                musicStep = 0;
+                musicInterval = setInterval(playMusicStep, 280);
+            } else {
+                if (musicInterval) clearInterval(musicInterval);
+            }
+        }
+
+        function loadGameData() {
+            try {
+                let data = localStorage.getItem("nexobrix_xxl_save_v18");
+                if (data) {
+                    let parsed = JSON.parse(data);
+                    highscore = parsed.highscore || 0;
+                    highscoreZeit = parsed.highscoreZeit || 0;
+                    coins = parsed.coins !== undefined ? parsed.coins : 300;
+                    maxAdvLevel = parsed.maxAdvLevel || 1;
+                    lastDailyClaim = parsed.lastDailyClaim || "";
+                    dailyStreak = parsed.dailyStreak || 1;
+                    unlockedThemes = parsed.unlockedThemes || ["classic"];
+                    activeThemeKey = parsed.activeThemeKey || "classic";
+                    currentLang = parsed.currentLang || "de";
+                    isLandscape = parsed.isLandscape || false;
+                    if (parsed.shopUpgrades) shopUpgrades = { ...shopUpgrades, ...parsed.shopUpgrades };
+                    if (parsed.stats) stats = { ...stats, ...parsed.stats };
+                    if (parsed.achievements) achievements = { ...achievements, ...parsed.achievements };
+                    if (THEME_PALETTES[activeThemeKey]) {
+                        arcadeBlockColors = THEME_PALETTES[activeThemeKey].colors;
+                    }
+                }
+            } catch (e) {}
+            applyCanvasDimensions();
+        }
+
+        function saveGameData() {
+            try {
+                let data = { highscore, highscoreZeit, coins, maxAdvLevel, lastDailyClaim, dailyStreak, unlockedThemes, activeThemeKey, currentLang, isLandscape, shopUpgrades, stats, achievements };
+                localStorage.setItem("nexobrix_xxl_save_v18", JSON.stringify(data));
+            } catch (e) {}
+        }
+
+        loadGameData();
+
+        function getDaysDiff(dateString) {
+            if (!dateString) return 999;
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            let last = new Date(dateString);
+            last.setHours(0,0,0,0);
+            return Math.round((today - last) / (1000 * 60 * 60 * 24));
+        }
+
+        function canClaimDaily() {
+            let today = new Date().toDateString();
+            return lastDailyClaim !== today;
+        }
+
+        function spawnParticles(x, y, count = 6, customColors = null, isConfetti = false) {
+            let colors = customColors || arcadeBlockColors;
+            for (let i = 0; i < count; i++) {
+                let speedMult = isConfetti ? 2.5 : 1;
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10 * speedMult,
+                    vy: (Math.random() - 0.5) * 10 * speedMult,
+                    radius: Math.random() * (isConfetti ? 6 : 5) + (isConfetti ? 4 : 3),
+                    lifetime: Math.random() * (isConfetti ? 40 : 20) + (isConfetti ? 30 : 15),
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    isConfetti: isConfetti,
+                    isStar: shopUpgrades.starParticles
+                });
+            }
+        }
+
+        function addFloatingText(text, x, y, color = "#FACC15") {
+            floatingTexts.push({ text, x, y, lifetime: 45, color });
+        }
+
+        function updateEffects() {
+            for (let mp of menuParticles) {
+                mp.y += mp.vy;
+                if (mp.y < 0) { mp.y = canvas.height; mp.x = Math.random() * canvas.width; }
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                if (p.isConfetti) p.vy += 0.3;
+                p.x += p.vx; p.y += p.vy;
+                p.radius -= 0.15; p.lifetime--;
+                if (p.lifetime <= 0 || p.radius <= 0) particles.splice(i, 1);
+            }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ft.y -= 1.8; ft.lifetime--;
+                if (ft.lifetime <= 0) floatingTexts.splice(i, 1);
+            }
+            if (shakeIntensity > 0) shakeIntensity--;
+            if (screenFlash > 0) screenFlash -= 0.04;
+        }
+
+        function drawEffects() {
+            for (let p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                if (p.isStar) {
+                    let r = Math.max(1, p.radius * 1.5);
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.font = `${Math.round(r * 2)}px ${FONT_TITLE}`;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("✦", 0, 0);
+                    ctx.restore();
+                } else if (p.isConfetti) {
+                    ctx.fillRect(p.x, p.y, p.radius, p.radius);
+                } else {
+                    ctx.arc(p.x, p.y, Math.max(0, p.radius), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            for (let ft of floatingTexts) {
+                ctx.save();
+                ctx.font = `bold 34px ${FONT_TITLE}`;
+                ctx.fillStyle = ft.color;
+                ctx.shadowColor = "#000";
+                ctx.shadowBlur = 10;
+                ctx.textAlign = "center";
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+            if (screenFlash > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, screenFlash)})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function getRandomBlock() {
+            let shape = BASE_SHAPES[Math.floor(Math.random() * BASE_SHAPES.length)];
+            let color = arcadeBlockColors[Math.floor(Math.random() * arcadeBlockColors.length)];
+            return { shape, color, stype: "normal" };
+        }
+
+        function generateNewBlocks() {
+            for (let i = 0; i < 3; i++) {
+                current_blocks[i] = getRandomBlock();
+            }
+            if (shopUpgrades.startTnt && current_blocks[0] !== null) {
+                current_blocks[0] = { shape: [[0, 0]], color: "#EF4444", stype: "tnt" };
+            }
+        }
+
+        function rotateShapeData(blockData) {
+            let rotated = blockData.shape.map(([x, y]) => [-y, x]);
+            let minX = Math.min(...rotated.map(p => p[0]));
+            let minY = Math.min(...rotated.map(p => p[1]));
+            let normalized = rotated.map(([x, y]) => [x - minX, y - minY]);
+            return { shape: normalized, color: blockData.color, stype: blockData.stype };
+        }
+
+        function drawRoundRect(x, y, w, h, radius, fillColor, strokeColor, lineWidth) {
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, radius);
+            if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+            if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth || 1; ctx.stroke(); }
+        }
+
+        function drawCoinIcon(cx, cy, radius = 18) {
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetY = 3;
+
+            let outerGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+            outerGrad.addColorStop(0, "#FEF08A");
+            outerGrad.addColorStop(0.5, "#EAB308");
+            outerGrad.addColorStop(1, "#854D0E");
+            ctx.fillStyle = outerGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            let innerGrad = ctx.createRadialGradient(cx - radius*0.3, cy - radius*0.3, radius*0.1, cx, cy, radius*0.8);
+            innerGrad.addColorStop(0, "#FDE047");
+            innerGrad.addColorStop(1, "#CA8A04");
+            ctx.fillStyle = innerGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.78, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "#FEF08A";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.78, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = "#FEF08A";
+            ctx.font = `bold ${Math.round(radius * 1.1)}px ${FONT_TITLE}`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("★", cx, cy + 1);
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.beginPath();
+            ctx.arc(cx - radius * 0.35, cy - radius * 0.35, radius * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawArcadeBlock(x, y, size, colorHex, stype = "normal") {
+            drawRoundRect(x, y, size, size, 12, colorHex, "rgba(0,0,0,0.3)", 2);
+            
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.beginPath();
+            ctx.roundRect(x + 4, y + 4, size - 8, size / 2 - 2, 8);
+            ctx.fill();
+
+            let cx = x + size / 2;
+            let cy = y + size / 2;
+            if (stype === "tnt") {
+                ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText("TNT", cx, cy + 6); ctx.textAlign = "left";
+            } else if (stype === "laser") {
+                ctx.fillStyle = "#FFF"; ctx.font = `bold 20px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText("⚡", cx, cy + 7); ctx.textAlign = "left";
+            } else if (stype === "obstacle") {
+                ctx.fillStyle = "#94A3B8"; ctx.font = `bold 16px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText("🔒", cx, cy + 6); ctx.textAlign = "left";
+            } else if (stype === "jewel") {
+                ctx.fillStyle = "#FEF08A"; ctx.font = `bold 22px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText("💎", cx, cy + 8); ctx.textAlign = "left";
+            }
+        }
+
+        function drawBlockShape(blockData, startX, startY, size, gap) {
+            for (let coord of blockData.shape) {
+                let bx = startX + coord[0] * (size + gap);
+                let by = startY + coord[1] * (size + gap);
+                drawArcadeBlock(bx, by, size, blockData.color, blockData.stype);
+            }
+        }
+
+        function drawBoosterIcon(type, cx, cy) {
+            ctx.save();
+            if (type === "rotate") {
+                ctx.strokeStyle = "#38BDF8"; ctx.lineWidth = 4.5; ctx.lineCap = "round"; ctx.shadowColor = "rgba(56, 189, 248, 0.6)"; ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(cx, cy, 15, -Math.PI * 0.7, Math.PI * 0.8); ctx.stroke();
+                ctx.fillStyle = "#38BDF8"; ctx.beginPath(); ctx.moveTo(cx + 12, cy - 12); ctx.lineTo(cx + 22, cy - 2); ctx.lineTo(cx + 8, cy - 2); ctx.closePath(); ctx.fill();
+                drawRoundRect(cx - 5, cy - 5, 10, 10, 2, "#38BDF8", null);
+            } else if (type === "shuffle") {
+                ctx.strokeStyle = "#FACC15"; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.shadowColor = "rgba(250, 204, 21, 0.6)"; ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.moveTo(cx - 16, cy - 10); ctx.bezierCurveTo(cx - 4, cy - 10, cx + 4, cy + 10, cx + 16, cy + 10); ctx.stroke();
+                ctx.fillStyle = "#FACC15"; ctx.beginPath(); ctx.moveTo(cx + 16, cy + 10); ctx.lineTo(cx + 8, cy + 4); ctx.lineTo(cx + 8, cy + 16); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(cx - 16, cy + 10); ctx.bezierCurveTo(cx - 4, cy + 10, cx + 4, cy - 10, cx + 16, cy - 10); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx + 16, cy - 10); ctx.lineTo(cx + 8, cy - 16); ctx.lineTo(cx + 8, cy - 4); ctx.closePath(); ctx.fill();
+            } else if (type === "clear2") {
+                ctx.shadowColor = "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 8;
+                drawRoundRect(cx - 18, cy - 13, 36, 10, 4, "#22C55E", null);
+                drawRoundRect(cx - 18, cy + 3, 36, 10, 4, "#22C55E", null);
+                ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 3.5; ctx.lineCap = "round";
+                ctx.beginPath(); ctx.moveTo(cx - 20, cy - 16); ctx.lineTo(cx + 20, cy + 16); ctx.stroke();
+            } else if (type === "tnt") {
+                ctx.shadowColor = "rgba(239, 68, 68, 0.8)"; ctx.shadowBlur = 10;
+                drawRoundRect(cx - 14, cy - 8, 8, 24, 3, "#EF4444", "#7F1D1D", 1);
+                drawRoundRect(cx - 4, cy - 11, 8, 27, 3, "#DC2626", "#7F1D1D", 1);
+                drawRoundRect(cx + 6, cy - 8, 8, 24, 3, "#EF4444", "#7F1D1D", 1);
+                ctx.fillStyle = "#FACC15"; ctx.fillRect(cx - 15, cy, 30, 5);
+                ctx.strokeStyle = "#F97316"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy - 11); ctx.quadraticCurveTo(cx + 4, cy - 20, cx + 10, cy - 18); ctx.stroke();
+                ctx.fillStyle = "#FEF08A"; ctx.beginPath(); ctx.arc(cx + 10, cy - 18, 3.5, 0, Math.PI * 2); ctx.fill();
+            } else if (type === "laser") {
+                ctx.fillStyle = "#06B6D4"; ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2; ctx.shadowColor = "rgba(6, 182, 212, 0.9)"; ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.moveTo(cx + 3, cy - 20); ctx.lineTo(cx - 14, cy + 1); ctx.lineTo(cx - 2, cy + 1); ctx.lineTo(cx - 7, cy + 20); ctx.lineTo(cx + 14, cy - 1); ctx.lineTo(cx + 2, cy - 1); ctx.closePath(); ctx.fill(); ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function getShapeDimensions(shape) {
+            let maxX = Math.max(...shape.map(p => p[0])) + 1;
+            let maxY = Math.max(...shape.map(p => p[1])) + 1;
+            return { w: maxX, h: maxY };
+        }
+
+        function canPlace(shape, gridCol, gridRow) {
+            for (let coord of shape) {
+                let c = gridCol + coord[0];
+                let r = gridRow + coord[1];
+                if (c < 0 || c >= GRID_SIZE || r < 0 || r >= GRID_SIZE) return false;
+                if (grid[r][c] !== null) return false;
+            }
+            return true;
+        }
+
+        function placeBlock(blockData, gridCol, gridRow) {
+            let stype = blockData.stype;
+            let gp = getGridParams();
+            stats.totalBlocksPlaced++;
+
+            if (stype === "tnt" || stype === "laser") {
+                shakeIntensity = 15; screenFlash = 0.4;
+                playSound(stype === "tnt" ? 120 : 500, 0.4, stype === "tnt" ? 'square' : 'sine');
+                
+                let points = 0;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        let inRange = false;
+                        if (stype === "tnt" && Math.abs(r - gridRow) <= 1 && Math.abs(c - gridCol) <= 1) inRange = true;
+                        if (stype === "laser" && (r === gridRow || c === gridCol)) inRange = true;
+                        
+                        if (inRange && grid[r][c] !== null) {
+                            if (grid[r][c].stype === "jewel") advJewelsCollected++;
+                            grid[r][c] = null;
+                            spawnParticles(gp.offsetX + c*(gp.cellSize+gp.gap) + gp.cellSize/2, gp.offsetY + r*(gp.cellSize+gp.gap) + gp.cellSize/2, 5, ["#EF4444", "#38BDF8", "#FFF"]);
+                            points += 50;
+                        }
+                    }
+                }
+                score += (stype === "tnt" ? 300 : 400) + points;
+                stats.totalScore += (stype === "tnt" ? 300 : 400);
+                addFloatingText(stype.toUpperCase() + "!", gp.offsetX + gridCol*(gp.cellSize+gp.gap), gp.offsetY + gridRow*(gp.cellSize+gp.gap), "#EF4444");
+                checkAdventureWinCondition();
+                return;
+            }
+
+            for (let coord of blockData.shape) {
+                grid[gridRow + coord[1]][gridCol + coord[0]] = { color: blockData.color, stype: blockData.stype };
+            }
+        }
+
+        function clearLines() {
+            let rowsToClear = [];
+            let colsToClear = [];
+            let gp = getGridParams();
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                if (grid[r].every(cell => cell !== null)) rowsToClear.push(r);
+            }
+            for (let c = 0; c < GRID_SIZE; c++) {
+                if (grid.every(row => row[c] !== null)) colsToClear.push(c);
+            }
+
+            let cleared = rowsToClear.length + colsToClear.length;
+            if (cleared > 0) {
+                let pts = cleared * 120 * cleared;
+                score += pts;
+                
+                let earnedCoins = cleared * (shopUpgrades.doubleCoins ? 10 : 5);
+                coins += earnedCoins;
+
+                stats.totalLinesCleared += cleared;
+                stats.totalScore += pts;
+                if (cleared >= 2) stats.totalCombos++;
+
+                shakeIntensity = 6 * cleared;
+                playClearSound(cleared);
+
+                if (cleared >= 2) {
+                    screenFlash = Math.min(1.0, 0.4 + (cleared * 0.15));
+                    spawnParticles(canvas.width / 2, canvas.height / 2, 40 * cleared, null, true);
+                }
+
+                // Nur die betroffenen ZEILEN leeren
+                for (let r of rowsToClear) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (grid[r][c]) {
+                            if (grid[r][c].stype === "jewel") advJewelsCollected++;
+                            spawnParticles(gp.offsetX + c*(gp.cellSize+gp.gap) + gp.cellSize/2, gp.offsetY + r*(gp.cellSize+gp.gap) + gp.cellSize/2, 8);
+                            grid[r][c] = null;
+                        }
+                    }
+                }
+                // Nur die betroffenen SPALTEN leeren
+                for (let c of colsToClear) {
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        if (grid[r][c]) {
+                            if (grid[r][c].stype === "jewel") advJewelsCollected++;
+                            spawnParticles(gp.offsetX + c*(gp.cellSize+gp.gap) + gp.cellSize/2, gp.offsetY + r*(gp.cellSize+gp.gap) + gp.cellSize/2, 8);
+                            grid[r][c] = null;
+                        }
+                    }
+                }
+
+                if (cleared >= 2) {
+                    addFloatingText(`Combo ${cleared}!`, canvas.width / 2, gp.offsetY - 25, "#38BDF8");
+                } else {
+                    addFloatingText(`+${pts}`, canvas.width / 2, gp.offsetY - 25, "#FACC15");
+                }
+
+                if (currentMode === "ADVENTURE") {
+                    advLinesCleared += cleared;
+                    checkAdventureWinCondition();
+                }
+
+                if (currentMode === "ZEIT" || (currentMode === "ADVENTURE" && advLevelType === "time")) {
+                    let maxT = shopUpgrades.extraTime ? 55.0 : 45.0;
+                    timeLeft = Math.min(maxT, timeLeft + cleared * 4.0);
+                    if (score > highscoreZeit) highscoreZeit = score;
+                } else {
+                    if (score > highscore) highscore = score;
+                }
+                saveGameData();
+            }
+        }
+
+        function checkGameOver() {
+            for (let i = 0; i < 3; i++) {
+                if (current_blocks[i] !== null) {
+                    let shape = current_blocks[i].shape;
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            if (canPlace(shape, c, r)) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function checkAdventureWinCondition() {
+            if (currentMode !== "ADVENTURE") return;
+            let success = false;
+            if (advLevelType === "lines" || advLevelType === "time") {
+                if (advLinesCleared >= advTargetLines) success = true;
+            } else if (advLevelType === "jewel") {
+                if (advJewelsCollected >= advJewelsTotal) success = true;
+            }
+
+            if (success && !levelComplete) {
+                levelComplete = true;
+                playSound(880, 0.4, 'sine');
+                addFloatingText(t("levelCleared"), canvas.width / 2, canvas.height / 2 - 50, "#22C55E");
+                spawnParticles(canvas.width/2, canvas.height/2, 50, null, true);
+                if (selectedAdvLevel === maxAdvLevel && maxAdvLevel < 30) maxAdvLevel++;
+                
+                let bonus = shopUpgrades.doubleCoins ? 100 : 50;
+                coins += bonus;
+                saveGameData();
+            }
+        }
+
+        function startGameSession(mode, lvlNum = 1) {
+            currentMode = mode;
+            selectedAdvLevel = lvlNum;
+            gameState = "GAME";
+            score = 0;
+            let baseTime = shopUpgrades.extraTime ? 45.0 : 35.0;
+            timeLeft = mode === "ZEIT" ? baseTime : 45.0;
+            gameOver = false;
+            levelComplete = false;
+            rotateModeActive = false;
+            stats.totalGamesPlayed++;
+
+            if (mode === "ADVENTURE") {
+                grid = Array(8).fill(null).map(() => Array(8).fill(null));
+                advLinesCleared = 0;
+                advJewelsCollected = 0;
+
+                if (lvlNum % 3 === 0) {
+                    advLevelType = "time";
+                    advTargetLines = 4 + Math.floor(lvlNum * 1.4);
+                    timeLeft = Math.max(18.0, baseTime + 10.0 - (lvlNum * 0.8));
+                } else if (lvlNum % 3 === 2) {
+                    advLevelType = "jewel";
+                    advJewelsTotal = 3 + Math.floor(lvlNum * 0.7);
+                    
+                    let placed = 0;
+                    while (placed < advJewelsTotal) {
+                        let r = Math.floor(Math.random() * 6) + 1;
+                        let c = Math.floor(Math.random() * 8);
+                        if (grid[r][c] === null) {
+                            grid[r][c] = { color: "#FACC15", stype: "jewel" };
+                            placed++;
+                        }
+                    }
+
+                    if (lvlNum >= 8) {
+                        let obstacleCount = Math.min(12, Math.floor((lvlNum - 6) * 0.5));
+                        let obsPlaced = 0;
+                        while (obsPlaced < obstacleCount) {
+                            let r = Math.floor(Math.random() * 6) + 1;
+                            let c = Math.floor(Math.random() * 8);
+                            if (grid[r][c] === null) {
+                                grid[r][c] = { color: "#475569", stype: "obstacle" };
+                                obsPlaced++;
+                            }
+                        }
+                    }
+                } else {
+                    advLevelType = "lines";
+                    advTargetLines = 4 + Math.floor(lvlNum * 1.8);
+                    let obstacleCount = Math.min(22, 2 + Math.floor(lvlNum * 0.8));
+                    let placed = 0;
+                    while (placed < obstacleCount) {
+                        let r = Math.floor(Math.random() * 6) + 1;
+                        let c = Math.floor(Math.random() * 8);
+                        if (grid[r][c] === null) {
+                            grid[r][c] = { color: "#475569", stype: "obstacle" };
+                            placed++;
+                        }
+                    }
+                }
+            } else {
+                grid = Array(8).fill(null).map(() => Array(8).fill(null));
+            }
+            generateNewBlocks();
+            saveGameData();
+        }
+
+        function executeBooster(type) {
+            stats.boostersUsed++;
+            if (type === "rotate") {
+                rotateModeActive = !rotateModeActive;
+                addFloatingText(rotateModeActive ? t("rotateInstruction") : t("rotateOff"), canvas.width / 2, canvas.height - 120, "#FACC15");
+            } else if (type === "shuffle") {
+                if (coins < 40) { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height - 120, "#EF4444"); return; }
+                coins -= 40;
+                saveGameData();
+                generateNewBlocks();
+                playSound(650, 0.2, 'sine');
+                addFloatingText(t("shuffled"), canvas.width / 2, canvas.height - 120, "#38BDF8");
+            } else if (type === "clear2") {
+                if (coins < 100) { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height - 120, "#EF4444"); return; }
+                coins -= 100;
+                saveGameData();
+                shakeIntensity = 12;
+                score += 300;
+                let gp = getGridParams();
+                let clearedCount = 0;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    if (grid[r].some(c => c !== null) && clearedCount < 2) {
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            if (grid[r][c] && grid[r][c].stype === "jewel") advJewelsCollected++;
+                            if (grid[r][c]) spawnParticles(gp.offsetX + c*(gp.cellSize+gp.gap), gp.offsetY + r*(gp.cellSize+gp.gap), 5);
+                            grid[r][c] = null;
+                        }
+                        clearedCount++;
+                    }
+                }
+                addFloatingText(t("rowsCleared"), canvas.width / 2, canvas.height - 120, "#22C55E");
+                playSound(900, 0.2, 'square');
+            } else if (type === "tnt" || type === "laser") {
+                let cost = 120;
+                if (coins < cost) { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height - 120, "#EF4444"); return; }
+                let freeIdx = current_blocks.findIndex(b => b === null);
+                if (freeIdx === -1) { addFloatingText(t("noSlot"), canvas.width / 2, canvas.height - 120, "#EF4444"); return; }
+                coins -= cost;
+                saveGameData();
+                if (type === "tnt") {
+                    current_blocks[freeIdx] = { shape: [[0, 0]], color: "#EF4444", stype: "tnt" };
+                    addFloatingText(t("tntBought"), canvas.width / 2, canvas.height - 120, "#EF4444");
+                } else {
+                    current_blocks[freeIdx] = { shape: [[0, 0]], color: "#38BDF8", stype: "laser" };
+                    addFloatingText(t("laserBought"), canvas.width / 2, canvas.height - 120, "#38BDF8");
+                }
+                playSound(600, 0.15, 'sine');
+            }
+        }
+
+        let BTN_MENU_ADVENTURE, BTN_MENU_CLASSIC, BTN_MENU_ZEIT, BTN_MENU_SHOP, BTN_MENU_ACHIEVEMENTS, BTN_MENU_DAILY, BTN_MENU_ORIENT, BTN_MENU_LANG;
+
+        function updateMenuButtons() {
+            if (isLandscape) {
+                BTN_MENU_LANG = { x: 440, y: 20, w: 100, h: 42 };
+                BTN_MENU_ORIENT = { x: 60, y: 320, w: 480, h: 60 };
+                BTN_MENU_ADVENTURE = { x: 600, y: 30, w: 640, h: 70 };
+                BTN_MENU_CLASSIC = { x: 600, y: 115, w: 640, h: 70 };
+                BTN_MENU_ZEIT = { x: 600, y: 200, w: 640, h: 70 };
+                BTN_MENU_SHOP = { x: 600, y: 285, w: 305, h: 65 };
+                BTN_MENU_ACHIEVEMENTS = { x: 935, y: 285, w: 305, h: 65 };
+                BTN_MENU_DAILY = { x: 600, y: 365, w: 640, h: 65 };
+            } else {
+                BTN_MENU_LANG = { x: 475, y: 25, w: 100, h: 45 };
+                BTN_MENU_ORIENT = { x: 75, y: 880, w: 450, h: 60 };
+                BTN_MENU_ADVENTURE = { x: 75, y: 480, w: 450, h: 65 };
+                BTN_MENU_CLASSIC = { x: 75, y: 560, w: 450, h: 65 };
+                BTN_MENU_ZEIT = { x: 75, y: 640, w: 450, h: 65 };
+                BTN_MENU_SHOP = { x: 75, y: 720, w: 215, h: 60 };
+                BTN_MENU_ACHIEVEMENTS = { x: 310, y: 720, w: 215, h: 60 };
+                BTN_MENU_DAILY = { x: 75, y: 800, w: 450, h: 60 };
+            }
+        }
+
+        function drawMainMenu() {
+            updateMenuButtons();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            for (let mp of menuParticles) {
+                ctx.beginPath();
+                ctx.arc(mp.x, mp.y, mp.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            drawRoundRect(BTN_MENU_LANG.x, BTN_MENU_LANG.y, BTN_MENU_LANG.w, BTN_MENU_LANG.h, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = `bold 16px ${FONT_TITLE}`;
+            ctx.textAlign = "center";
+            ctx.fillText(currentLang === "de" ? "🌐 DE" : "🌐 EN", BTN_MENU_LANG.x + BTN_MENU_LANG.w / 2, BTN_MENU_LANG.y + 27);
+
+            let cx = isLandscape ? 300 : canvas.width / 2;
+            let cy = isLandscape ? 90 : 200;
+            
+            ctx.shadowColor = "rgba(0, 0, 0, 0.6)"; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
+            let boxGrad = ctx.createLinearGradient(cx - 220, cy - 55, cx + 220, cy + 50);
+            boxGrad.addColorStop(0, "#2A2A5C"); boxGrad.addColorStop(1, "#161632");
+            drawRoundRect(cx - 220, cy - 55, 440, 105, 26, boxGrad, "#6366F1", 4);
+            
+            ctx.save();
+            ctx.font = `bold 54px ${FONT_TITLE}`; ctx.textAlign = "center";
+            let titleGrad = ctx.createLinearGradient(cx - 150, cy - 18, cx + 150, cy + 18);
+            titleGrad.addColorStop(0, "#FEF08A"); titleGrad.addColorStop(0.5, "#FBBF24"); titleGrad.addColorStop(1, "#F97316");
+            ctx.fillStyle = titleGrad;
+            ctx.shadowColor = "rgba(249, 115, 22, 0.8)"; ctx.shadowBlur = 18;
+            ctx.fillText("NexoBrix", cx, cy + 12);
+            ctx.restore();
+
+            let cardX = isLandscape ? 60 : 60;
+            let cardY = isLandscape ? 165 : 305;
+            drawRoundRect(cardX, cardY, 480, 135, 20, THEME.card_bg, THEME.card_border, 3);
+            drawCoinIcon(cardX + 45, cardY + 43, 18);
+
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#FACC15"; ctx.font = `bold 30px ${FONT_TITLE}`;
+            ctx.fillText(`Coins: ${coins}`, cardX + 75, cardY + 52);
+
+            ctx.fillStyle = "#F8FAFC"; ctx.font = `700 20px ${FONT_UI}`;
+            ctx.fillText(`${t("classicHigh")}: ${highscore}`, cardX + 45, cardY + 91);
+            ctx.fillText(`${t("timedHigh")}: ${highscoreZeit}`, cardX + 250, cardY + 91);
+
+            ctx.fillStyle = musicEnabled ? "#4ADE80" : "#94A3B8";
+            ctx.font = `700 17px ${FONT_UI}`;
+            ctx.fillText(musicEnabled ? t("musicOn") : t("musicOff"), cardX + 45, cardY + 120);
+
+            drawRoundRect(BTN_MENU_ORIENT.x, BTN_MENU_ORIENT.y, BTN_MENU_ORIENT.w, BTN_MENU_ORIENT.h, 18, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 20px ${FONT_TITLE}`; ctx.textAlign = "center";
+            ctx.fillText(isLandscape ? t("orientLand") : t("orientPort"), BTN_MENU_ORIENT.x + BTN_MENU_ORIENT.w / 2, BTN_MENU_ORIENT.y + 37);
+
+            let buttons = [
+                { rect: BTN_MENU_ADVENTURE, label: t("adventure"), sub: t("adventureSub", { lvl: maxAdvLevel }), c1: "#4F46E5", c2: "#312E81" },
+                { rect: BTN_MENU_CLASSIC, label: t("classic"), sub: t("classicSub"), c1: "#2563EB", c2: "#1E40AF" },
+                { rect: BTN_MENU_ZEIT, label: t("timed"), sub: t("timedSub"), c1: "#0284C7", c2: "#075985" },
+                { rect: BTN_MENU_SHOP, label: t("shop"), sub: t("shopSub"), c1: "#7C3AED", c2: "#5B21B6" },
+                { rect: BTN_MENU_ACHIEVEMENTS, label: t("achievements"), sub: t("achievementsSub"), c1: "#D97706", c2: "#92400E" },
+                { rect: BTN_MENU_DAILY, label: canClaimDaily() ? t("wheel") : "GLÜCKSRAD 🔒", sub: canClaimDaily() ? t("wheelSubReady") : t("wheelSubWait"), c1: canClaimDaily() ? "#16A34A" : "#334155", c2: canClaimDaily() ? "#14532D" : "#1E293B" }
+            ];
+
+            buttons.forEach(b => {
+                let btnGrad = ctx.createLinearGradient(b.rect.x, b.rect.y, b.rect.x, b.rect.y + b.rect.h);
+                btnGrad.addColorStop(0, b.c1); btnGrad.addColorStop(1, b.c2);
+
+                drawRoundRect(b.rect.x, b.rect.y, b.rect.w, b.rect.h, 18, btnGrad, "#FFFFFF", 2);
+                
+                ctx.fillStyle = "rgba(255, 255, 255, 0.25)"; ctx.beginPath();
+                ctx.roundRect(b.rect.x + 3, b.rect.y + 3, b.rect.w - 6, 12, 10); ctx.fill();
+
+                ctx.fillStyle = THEME.text; ctx.font = `bold 22px ${FONT_TITLE}`; ctx.textAlign = "left";
+                ctx.fillText(b.label, b.rect.x + 20, b.rect.y + 28);
+
+                ctx.save(); ctx.fillStyle = "rgba(255, 255, 255, 0.92)"; ctx.shadowColor = "rgba(0, 0, 0, 0.6)"; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
+                ctx.font = `700 15px ${FONT_UI}`; ctx.fillText(b.sub, b.rect.x + 20, b.rect.y + 50); ctx.restore();
+            });
+            ctx.shadowBlur = 0;
+        }
+
+        function drawWheelMenu() {
+            ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let topHeaderW = isLandscape ? 1250 : 550;
+            drawRoundRect(25, 25, topHeaderW, 85, 18, THEME.card_bg, THEME.card_border, 3);
+            drawRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = THEME.text; ctx.font = `bold 16px ${FONT_UI}`; ctx.fillText(t("backMenu"), BTN_BACK.x + 10, BTN_BACK.y + 25);
+
+            ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center";
+            ctx.fillText(t("wheelTitle"), canvas.width / 2, 74);
+
+            let currentMulti = Math.min(dailyStreak, 7);
+            ctx.font = `700 18px ${FONT_UI}`; ctx.fillStyle = "#FACC15";
+            ctx.fillText(t("streakText", { day: dailyStreak, multi: currentMulti }), canvas.width / 2, 138);
+
+            let cx = isLandscape ? 380 : canvas.width / 2;
+            let cy = isLandscape ? 350 : 440;
+            let radius = isLandscape ? 170 : 180;
+
+            ctx.save(); ctx.translate(cx, cy); ctx.rotate(wheelAngle);
+            let sliceAngle = (Math.PI * 2) / wheelSlices.length;
+            let sliceColors = ["#3B3BBF", "#EF4444", "#22C55E", "#FACC15", "#A855F7", "#38BDF8", "#EC4899", "#F97316"];
+
+            for (let i = 0; i < wheelSlices.length; i++) {
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, radius, i * sliceAngle, (i + 1) * sliceAngle); ctx.closePath();
+                ctx.fillStyle = sliceColors[i % sliceColors.length]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#FFFFFF"; ctx.stroke();
+
+                ctx.save(); ctx.rotate(i * sliceAngle + sliceAngle / 2); ctx.textAlign = "right"; ctx.fillStyle = "#FFFFFF";
+                ctx.font = `bold 22px ${FONT_TITLE}`; ctx.fillText(wheelSlices[i], radius - 20, 7); ctx.restore();
+            }
+            ctx.restore();
+
+            drawRoundRect(cx - 28, cy - 28, 56, 56, 28, "#1E1E3F", "#FACC15", 3);
+            ctx.fillStyle = "#FACC15"; ctx.beginPath(); ctx.moveTo(cx, cy - radius - 12); ctx.lineTo(cx - 12, cy - radius - 30); ctx.lineTo(cx + 12, cy - radius - 30); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            let btnX = isLandscape ? 700 : 150;
+            let btnY = isLandscape ? 280 : 840;
+            let btnW = isLandscape ? 380 : 300;
+
+            if (canClaimDaily()) {
+                if (!wheelSpinning) {
+                    drawRoundRect(btnX, btnY, btnW, 65, 20, "#22C55E", "#16A34A", 3);
+                    ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 24px ${FONT_TITLE}`; ctx.textAlign = "center";
+                    ctx.fillText(t("spinBtn"), btnX + btnW/2, btnY + 42);
+                } else {
+                    ctx.fillStyle = "#38BDF8"; ctx.font = `bold 22px ${FONT_UI}`; ctx.textAlign = "center";
+                    ctx.fillText(t("spinning"), btnX + btnW/2, btnY + 40);
+                }
+            } else {
+                drawRoundRect(btnX, btnY, btnW, 65, 20, "#334155", "#475569", 3);
+                ctx.fillStyle = "#94A3B8"; ctx.font = `bold 20px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(t("alreadySpun"), btnX + btnW/2, btnY + 35);
+                ctx.font = `700 15px ${FONT_UI}`; ctx.fillText(t("comeBack"), btnX + btnW/2, btnY + 53);
+            }
+
+            if (wheelResult !== null && !wheelSpinning) {
+                ctx.fillStyle = "#FACC15"; ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(t("wonCoins", { val: wheelResult }), isLandscape ? 890 : cx, isLandscape ? 380 : 1150);
+            }
+            ctx.textAlign = "left";
+        }
+
+        let shopItemRects = [];
+        function drawShopMenu() {
+            ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let headerW = isLandscape ? 1250 : 550;
+            drawRoundRect(25, 25, headerW, 85, 18, THEME.card_bg, THEME.card_border, 3);
+            drawRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 10, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = THEME.text; ctx.font = `bold 16px ${FONT_UI}`; ctx.fillText(t("backMenu"), BTN_BACK.x + 10, BTN_BACK.y + 25);
+            ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText(t("shopTitle"), canvas.width / 2, 74);
+            ctx.textAlign = "left";
+
+            let tabW = isLandscape ? 300 : 235;
+            let tab1X = isLandscape ? 320 : 50;
+            let tab2X = isLandscape ? 680 : 315;
+            drawRoundRect(tab1X, 125, tabW, 45, 12, shopTab === "skins" ? "#3B3BBF" : "#1E1E3F", shopTab === "skins" ? "#5C5CEB" : "#334155", 2);
+            ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 18px ${FONT_TITLE}`; ctx.textAlign = "center";
+            ctx.fillText(t("shopTabSkins"), tab1X + tabW/2, 153);
+
+            drawRoundRect(tab2X, 125, tabW, 45, 12, shopTab === "upgrades" ? "#3B3BBF" : "#1E1E3F", shopTab === "upgrades" ? "#5C5CEB" : "#334155", 2);
+            ctx.fillText(t("shopTabUpgrades"), tab2X + tabW/2, 153);
+            ctx.textAlign = "left";
+
+            shopItemRects = [];
+
+            if (shopTab === "skins") {
+                let keys = Object.keys(THEME_PALETTES);
+                let perPage = isLandscape ? 4 : 4;
+                let maxPages = Math.ceil(keys.length / perPage);
+                let pageKeys = keys.slice(shopPage * perPage, (shopPage + 1) * perPage);
+
+                pageKeys.forEach((key, idx) => {
+                    let theme = THEME_PALETTES[key];
+                    let unlocked = unlockedThemes.includes(key);
+                    let active = activeThemeKey === key;
+                    
+                    let x = isLandscape ? (idx % 2 === 0 ? 80 : 670) : 50;
+                    let y = isLandscape ? (idx < 2 ? 185 : 365) : (185 + idx * 190);
+                    let w = isLandscape ? 550 : 500;
+                    let h = isLandscape ? 160 : 170;
+
+                    drawRoundRect(x, y, w, h, 18, active ? "#1E293B" : THEME.card_bg, active ? "#22C55E" : THEME.card_border, active ? 3 : 2);
+                    ctx.fillStyle = THEME.text; ctx.font = `bold 24px ${FONT_TITLE}`; ctx.fillText(theme.name, x + 30, y + 40);
+
+                    theme.colors.forEach((col, cIdx) => { drawRoundRect(x + 30 + cIdx * 35, y + 58, 28, 28, 8, col, null); });
+
+                    ctx.font = `700 18px ${FONT_UI}`;
+                    if (active) { ctx.fillStyle = "#22C55E"; ctx.fillText(t("active"), x + 30, y + 125); }
+                    else if (unlocked) { ctx.fillStyle = "#38BDF8"; ctx.fillText(t("select"), x + 30, y + 125); }
+                    else { ctx.fillStyle = "#FACC15"; ctx.fillText(`${t("buy")} (${theme.cost} Coins)`, x + 30, y + 125); }
+                    
+                    shopItemRects.push({ x, y, w, h, key, type: "skin" });
+                });
+
+                let prevX = isLandscape ? 450 : 120;
+                let nextX = isLandscape ? 730 : 360;
+                let navY = isLandscape ? 535 : 1000;
+
+                drawRoundRect(prevX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+                ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText("◀ PREV", prevX + 60, navY + 28);
+
+                ctx.font = `700 18px ${FONT_UI}`; ctx.fillStyle = "#FACC15";
+                ctx.fillText(t("pageText", { cur: shopPage + 1, max: maxPages }), canvas.width / 2, navY + 28);
+
+                drawRoundRect(nextX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+                ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`;
+                ctx.fillText("NEXT ▶", nextX + 60, navY + 28);
+                ctx.textAlign = "left";
+            } else {
+                let upgradesList = [
+                    { key: "startTnt", titleKey: "upgrade_startTnt", subKey: "upgrade_startTntSub", cost: 800 },
+                    { key: "extraTime", titleKey: "upgrade_extraTime", subKey: "upgrade_extraTimeSub", cost: 1000 },
+                    { key: "doubleCoins", titleKey: "upgrade_doubleCoins", subKey: "upgrade_doubleCoinsSub", cost: 1200 },
+                    { key: "starParticles", titleKey: "upgrade_starParticles", subKey: "upgrade_starParticlesSub", cost: 500 }
+                ];
+
+                upgradesList.forEach((up, idx) => {
+                    let unlocked = shopUpgrades[up.key];
+                    let x = isLandscape ? (idx % 2 === 0 ? 80 : 670) : 50;
+                    let y = isLandscape ? (idx < 2 ? 185 : 365) : (185 + idx * 190);
+                    let w = isLandscape ? 550 : 500;
+                    let h = isLandscape ? 160 : 170;
+
+                    drawRoundRect(x, y, w, h, 18, unlocked ? "#1E293B" : THEME.card_bg, unlocked ? "#22C55E" : THEME.card_border, unlocked ? 3 : 2);
+                    ctx.fillStyle = THEME.text; ctx.font = `bold 22px ${FONT_TITLE}`; ctx.fillText(t(up.titleKey), x + 30, y + 40);
+
+                    ctx.fillStyle = "#CBD5E1"; ctx.font = `700 15px ${FONT_UI}`;
+                    ctx.fillText(t(up.subKey), x + 30, y + 75);
+
+                    ctx.font = `700 18px ${FONT_UI}`;
+                    if (unlocked) { ctx.fillStyle = "#22C55E"; ctx.fillText(`✓ ${t("active")}`, x + 30, y + 125); }
+                    else { ctx.fillStyle = "#FACC15"; ctx.fillText(`${t("buy")} (${up.cost} Coins)`, x + 30, y + 125); }
+                    shopItemRects.push({ x, y, w, h, key: up.key, cost: up.cost, type: "upgrade" });
+                });
+            }
+        }
+
+        let achievementRects = [];
+        function drawAchievements() {
+            ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let headerW = isLandscape ? 1250 : 550;
+            drawRoundRect(25, 25, headerW, 85, 18, THEME.card_bg, THEME.card_border, 3);
+            drawRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 10, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = THEME.text; ctx.font = `bold 16px ${FONT_UI}`; ctx.fillText(t("backMenu"), BTN_BACK.x + 10, BTN_BACK.y + 25);
+            ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText(t("achievementsTitle"), canvas.width / 2, 74);
+            ctx.textAlign = "left";
+
+            achievementRects = [];
+            let keys = Object.keys(achievements);
+            let perPage = 6;
+            let maxPages = Math.ceil(keys.length / perPage);
+            let pageKeys = keys.slice(achPage * perPage, (achPage + 1) * perPage);
+
+            pageKeys.forEach((key, idx) => {
+                let ach = achievements[key];
+                let x = isLandscape ? (idx % 2 === 0 ? 60 : 670) : 50;
+                let y = isLandscape ? (125 + Math.floor(idx / 2) * 125) : (135 + idx * 145);
+                let w = isLandscape ? 570 : 500;
+                let h = isLandscape ? 115 : 130;
+
+                drawRoundRect(x, y, w, h, 18, THEME.card_bg, THEME.card_border, 3);
+                
+                let achLabel = t("ach_" + key);
+                ctx.fillStyle = THEME.text; ctx.font = `bold 19px ${FONT_TITLE}`; ctx.fillText(achLabel, x + 25, y + 32);
+                
+                let currentVal = 0;
+                if(key === "pts") currentVal = stats.totalScore;
+                if(key === "pts_50k") currentVal = stats.totalScore;
+                if(key === "lines") currentVal = stats.totalLinesCleared;
+                if(key === "lines_250") currentVal = stats.totalLinesCleared;
+                if(key === "games") currentVal = stats.totalGamesPlayed;
+                if(key === "blocks") currentVal = stats.totalBlocksPlaced;
+                if(key === "combos") currentVal = stats.totalCombos;
+                if(key === "boosters") currentVal = stats.boostersUsed;
+                if(key === "wheel") currentVal = stats.wheelSpins;
+                if(key === "adv_lvl5") currentVal = Math.max(0, maxAdvLevel - 1);
+                if(key === "adv_lvl15") currentVal = Math.max(0, maxAdvLevel - 1);
+                if(key === "adv_lvl30") currentVal = Math.max(0, maxAdvLevel - 1);
+                
+                let progress = Math.min(1, currentVal / ach.target);
+                let barW = isLandscape ? 220 : 240;
+                
+                drawRoundRect(x + 25, y + 50, barW, 14, 7, "#161632", null);
+                drawRoundRect(x + 25, y + 50, barW * progress, 14, 7, progress >= 1 ? "#22C55E" : "#38BDF8", null);
+                
+                ctx.font = `700 14px ${FONT_UI}`; ctx.fillStyle = "#CBD5E1";
+                ctx.fillText(`${currentVal} / ${ach.target}`, x + 25, y + 88);
+
+                let btnX = isLandscape ? x + 380 : x + 310;
+                let btnY = y + 28;
+                let btnW = isLandscape ? 165 : 160;
+                let btnRect = { x: btnX, y: btnY, w: btnW, h: 52, key: key, canClaim: progress >= 1 && !ach.claimed };
+                
+                if (ach.claimed) {
+                    drawRoundRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h, 14, "#1E293B", "#475569", 2);
+                    ctx.fillStyle = "#94A3B8"; ctx.font = `bold 15px ${FONT_UI}`; ctx.fillText(t("claimed"), btnRect.x + 38, btnRect.y + 32);
+                } else if (progress >= 1) {
+                    drawRoundRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h, 14, "#F59E0B", "#FACC15", 3);
+                    ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 15px ${FONT_UI}`; ctx.fillText(`+${ach.reward} COINS!`, btnRect.x + 20, btnRect.y + 32);
+                } else {
+                    drawRoundRect(btnRect.x, btnRect.y, btnRect.w, btnRect.h, 14, "#334155", "#475569", 2);
+                    ctx.fillStyle = "#94A3B8"; ctx.font = `bold 15px ${FONT_UI}`; ctx.fillText(t("locked"), btnRect.x + 40, btnRect.y + 32);
+                }
+                achievementRects.push(btnRect);
+            });
+
+            let navY = isLandscape ? 520 : 1020;
+            let prevX = isLandscape ? 450 : 120;
+            let nextX = isLandscape ? 730 : 360;
+
+            drawRoundRect(prevX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`; ctx.textAlign = "center";
+            ctx.fillText("◀ PREV", prevX + 60, navY + 28);
+
+            ctx.font = `700 18px ${FONT_UI}`; ctx.fillStyle = "#FACC15";
+            ctx.fillText(t("pageText", { cur: achPage + 1, max: maxPages }), canvas.width / 2, navY + 28);
+
+            drawRoundRect(nextX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`;
+            ctx.fillText("NEXT ▶", nextX + 60, navY + 28);
+            ctx.textAlign = "left";
+        }
+
+        let mapRects = [];
+        function drawAdventureMap() {
+            ctx.fillStyle = THEME.bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            let headerW = isLandscape ? 1250 : 550;
+            drawRoundRect(25, 25, headerW, 85, 18, THEME.card_bg, THEME.card_border, 3);
+            drawRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 10, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = THEME.text; ctx.font = `bold 16px ${FONT_UI}`; ctx.fillText(t("backMenu"), BTN_BACK.x + 10, BTN_BACK.y + 25);
+            ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillText(t("mapTitle"), canvas.width / 2, 74);
+            ctx.textAlign = "left";
+
+            mapRects = [];
+            let startLvl = mapPage * 15 + 1;
+            let endLvl = Math.min(30, startLvl + 14);
+
+            let cols = isLandscape ? 5 : 3;
+            let boxW = isLandscape ? 210 : 140;
+            let boxH = isLandscape ? 100 : 125;
+            let gapX = isLandscape ? 30 : 25;
+            let gapY = isLandscape ? 18 : 22;
+            let startX = isLandscape ? 60 : 65;
+            let startY = isLandscape ? 130 : 145;
+
+            for (let lvl = startLvl; lvl <= endLvl; lvl++) {
+                let idxOnPage = lvl - startLvl;
+                let r = Math.floor(idxOnPage / cols);
+                let c = idxOnPage % cols;
+                let x = startX + c * (boxW + gapX);
+                let y = startY + r * (boxH + gapY);
+                let rect = { x, y, w: boxW, h: boxH, lvl };
+                mapRects.push(rect);
+
+                let unlocked = lvl <= maxAdvLevel;
+                drawRoundRect(x, y, boxW, boxH, 18, unlocked ? "#3B3BBF" : "#282852", unlocked ? "#5C5CEB" : "#1E1E3F", 3);
+                ctx.fillStyle = THEME.text; ctx.font = `bold 28px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(lvl, x + boxW/2, y + (isLandscape ? 38 : 45));
+
+                let icon = lvl % 3 === 0 ? `⏱️ ${t("time")}` : (lvl % 3 === 2 ? `💎 ${t("jewels")}` : `🧱 ${t("rows")}`);
+                ctx.font = `700 15px ${FONT_UI}`; ctx.fillStyle = unlocked ? "#FACC15" : "#64748B";
+                ctx.fillText(unlocked ? icon : t("locked"), x + boxW/2, y + (isLandscape ? 75 : 95));
+            }
+
+            let navY = isLandscape ? 500 : 915;
+            let prevX = isLandscape ? 450 : 120;
+            let nextX = isLandscape ? 730 : 360;
+
+            drawRoundRect(prevX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`; ctx.textAlign = "center";
+            ctx.fillText("◀ PREV", prevX + 60, navY + 28);
+
+            ctx.font = `700 18px ${FONT_UI}`; ctx.fillStyle = "#FACC15";
+            ctx.fillText(t("pageText", { cur: mapPage + 1, max: 2 }), canvas.width / 2, navY + 28);
+
+            drawRoundRect(nextX, navY, 120, 45, 12, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = "#FFF"; ctx.font = `bold 16px ${FONT_TITLE}`;
+            ctx.fillText("NEXT ▶", nextX + 60, navY + 28);
+            ctx.textAlign = "left";
+
+            return mapRects;
+        }
+
+        function drawGame() {
+            let offX = (Math.random() - 0.5) * shakeIntensity;
+            let offY = (Math.random() - 0.5) * shakeIntensity;
+            ctx.save();
+            ctx.translate(offX, offY);
+            ctx.fillStyle = THEME.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let gp = getGridParams();
+            let slotRects = getSlotRects();
+            let boosterRects = getBoosterRects();
+
+            drawRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 10, "#3B3BBF", "#5C5CEB", 2);
+            ctx.fillStyle = THEME.text; ctx.font = `bold 15px ${FONT_UI}`;
+            ctx.fillText(currentMode === "ADVENTURE" ? t("backMap") : t("backMenu"), BTN_BACK.x + 8, BTN_BACK.y + 25);
+
+            let coinBoxX = isLandscape ? 1140 : 455;
+            drawRoundRect(coinBoxX, 20, 130, 46, 15, "#2A2A5C", "#4C4CCF", 2);
+            drawCoinIcon(coinBoxX + 25, 43, 14);
+
+            ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 20px ${FONT_TITLE}`; ctx.textAlign = "left";
+            ctx.fillText(coins, coinBoxX + 51, 50);
+
+            let titleCenterX = isLandscape ? 300 : canvas.width / 2;
+            if (currentMode === "ADVENTURE") {
+                ctx.font = `bold 22px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillStyle = "#38BDF8";
+                ctx.fillText(`LEVEL ${selectedAdvLevel} (${advLevelType.toUpperCase()})`, titleCenterX, 35);
+                ctx.font = `bold 26px ${FONT_TITLE}`; ctx.fillStyle = "#FFFFFF";
+                let goalText = advLevelType === "jewel" ? `${t("jewels")}: ${advJewelsCollected} / ${advJewelsTotal}` : `${t("rows")}: ${advLinesCleared} / ${advTargetLines}`;
+                ctx.fillText(goalText, titleCenterX, 68);
+            } else {
+                ctx.font = `bold 22px ${FONT_TITLE}`; ctx.textAlign = "center"; ctx.fillStyle = "#FACC15";
+                ctx.fillText(`👑 ${currentMode === 'ZEIT' ? highscoreZeit : highscore}`, titleCenterX, 32);
+                ctx.font = `bold 42px ${FONT_TITLE}`; ctx.fillStyle = "#FFFFFF";
+                ctx.fillText(score, titleCenterX, 72);
+            }
+
+            if (currentMode === "ZEIT" || (currentMode === "ADVENTURE" && advLevelType === "time")) {
+                let barX = isLandscape ? 580 : 15;
+                let barY = isLandscape ? 70 : 135;
+                let barW = isLandscape ? 690 : 570;
+                drawRoundRect(barX, barY, barW, 13, 6, "#282852", null);
+                let maxT = shopUpgrades.extraTime ? 55.0 : 45.0;
+                let ratio = Math.max(0, timeLeft / (currentMode === "ZEIT" ? (shopUpgrades.extraTime ? 45.0 : 35.0) : maxT));
+                drawRoundRect(barX, barY, Math.floor(barW * ratio), 13, 6, timeLeft < 8 ? "#EF4444" : "#38BDF8", null);
+            }
+
+            let gridPxW = (GRID_SIZE * gp.cellSize) + ((GRID_SIZE - 1) * gp.gap);
+            drawRoundRect(gp.offsetX - 10, gp.offsetY - 10, gridPxW + 20, gridPxW + 20, 16, "#15152E", "#2D2D5E", 3);
+
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    let x = gp.offsetX + col * (gp.cellSize + gp.gap);
+                    let y = gp.offsetY + row * (gp.cellSize + gp.gap);
+                    let cell = grid[row][col];
+                    if (cell !== null) {
+                        drawArcadeBlock(x, y, gp.cellSize, cell.color, cell.stype);
+                    } else {
+                        drawRoundRect(x, y, gp.cellSize, gp.cellSize, 10, THEME.grid_empty, null);
+                    }
+                }
+            }
+
+            for (let i = 0; i < 3; i++) {
+                let slot = slotRects[i];
+                drawRoundRect(slot.x, slot.y, slot.w, slot.h, 18, THEME.card_bg, THEME.card_border, 3);
+                if (current_blocks[i] !== null && i !== selected_block_idx) {
+                    let b = current_blocks[i];
+                    let dim = getShapeDimensions(b.shape);
+                    let sSize = gp.cellSize * 0.58;
+                    let sGap = gp.gap * 0.58;
+                    let bW = dim.w * (sSize + sGap);
+                    let bH = dim.h * (sSize + sGap);
+                    drawBlockShape(b, slot.x + (slot.w - bW) / 2, slot.y + (slot.h - bH) / 2, sSize, sGap);
+                }
+            }
+
+            boosterRects.forEach(b => {
+                let isSelected = (b.type === "rotate" && rotateModeActive);
+                drawRoundRect(b.x, b.y, b.w, b.h, 16, isSelected ? "#FACC15" : "#2A2A5C", "#3F3F8C", 2);
+                ctx.fillStyle = THEME.text; ctx.font = `bold 14px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(t(b.labelKey), b.x + b.w/2, b.y + 26);
+                
+                drawBoosterIcon(b.type, b.x + b.w/2, b.y + 100);
+
+                ctx.fillStyle = "#FACC15"; ctx.font = `700 15px ${FONT_UI}`;
+                ctx.fillText(`${b.cost} Coins`, b.x + b.w/2, b.y + 165);
+                ctx.textAlign = "left";
+            });
+
+            if (dragging && selected_block_idx !== null && current_blocks[selected_block_idx] !== null) {
+                drawBlockShape(current_blocks[selected_block_idx], block_x, block_y, gp.cellSize, gp.gap);
+            }
+
+            if (levelComplete) {
+                let dialogX = isLandscape ? 425 : 75;
+                let dialogY = isLandscape ? 160 : 420;
+                drawRoundRect(dialogX, dialogY, 450, 280, 22, "#2A2A5C", "#4C4CCF", 4);
+                ctx.fillStyle = "#22C55E"; ctx.font = `bold 42px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(t("levelCleared"), dialogX + 225, dialogY + 65);
+                ctx.fillStyle = THEME.text; ctx.font = `700 22px ${FONT_UI}`;
+                ctx.fillText(t("levelDone", { lvl: selectedAdvLevel }), dialogX + 225, dialogY + 125);
+                ctx.fillText(t("tapNext"), dialogX + 225, dialogY + 185);
+                ctx.textAlign = "left";
+            } else if (gameOver) {
+                let dialogX = isLandscape ? 410 : 60;
+                let dialogY = isLandscape ? 90 : 360;
+                drawRoundRect(dialogX, dialogY, 480, 420, 22, "#2A2A5C", "#EF4444", 4);
+                ctx.fillStyle = "#EF4444"; ctx.font = `bold 42px ${FONT_TITLE}`; ctx.textAlign = "center";
+                ctx.fillText(t("gameOver"), dialogX + 240, dialogY + 60);
+                ctx.fillStyle = THEME.text; ctx.font = `700 20px ${FONT_UI}`;
+                ctx.fillText((timeLeft <= 0) ? t("timeUp") : t("noMoves"), dialogX + 240, dialogY + 105);
+
+                drawRoundRect(dialogX + 30, dialogY + 145, 420, 60, 18, "#2563EB", "#38BDF8", 3);
+                ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 20px ${FONT_TITLE}`; ctx.fillText(t("watchAd"), dialogX + 240, dialogY + 183);
+
+                drawRoundRect(dialogX + 30, dialogY + 215, 420, 55, 18, "#15803D", "#22C55E", 2);
+                ctx.fillStyle = "#FFFFFF"; ctx.font = `bold 18px ${FONT_TITLE}`; ctx.fillText(t("reviveCoins"), dialogX + 240, dialogY + 250);
+
+                drawRoundRect(dialogX + 30, dialogY + 280, 420, 50, 18, "#3B3BBF", "#5C5CEB", 2);
+                ctx.fillStyle = "#CBD5E1"; ctx.font = `700 18px ${FONT_UI}`; ctx.fillText(t("restart"), dialogX + 240, dialogY + 311);
+                ctx.textAlign = "left";
+            }
+
+            drawEffects();
+            ctx.restore();
+        }
+
+        function getMousePos(e) {
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            
+            let scaleX = canvas.width / rect.width;
+            let scaleY = canvas.height / rect.height;
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function triggerRewardedAdForRevive() {
+            if (window.CrazyGames && window.CrazyGames.SDK && window.CrazyGames.SDK.ad) {
+                window.CrazyGames.SDK.ad.requestAd("rewarded", {
+                    adStarted: () => { if (musicEnabled && audioCtx) audioCtx.suspend(); },
+                    adError: (error) => {
+                        console.log("Ad error:", error);
+                        if (musicEnabled && audioCtx) audioCtx.resume();
+                        addFloatingText(t("noAd"), canvas.width / 2, canvas.height / 2, "#EF4444");
+                    },
+                    adFinished: () => {
+                        if (musicEnabled && audioCtx) audioCtx.resume();
+                        revivePlayerAction();
+                    }
+                });
+            } else {
+                revivePlayerAction();
+            }
+        }
+
+        function revivePlayerAction() {
+            gameOver = false;
+            timeLeft = shopUpgrades.extraTime ? 45.0 : 35.0;
+            for (let r = 5; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    grid[r][c] = null;
+                }
+            }
+            generateNewBlocks();
+            saveGameData();
+            playSound(880, 0.3, 'square');
+            addFloatingText(t("revived"), canvas.width / 2, canvas.height / 2, "#22C55E");
+        }
+
+        function updateDragPosition(pos, blockData) {
+            let gp = getGridParams();
+            let dim = getShapeDimensions(blockData.shape);
+            
+            block_x = pos.x - (dim.w * (gp.cellSize + gp.gap)) / 2;
+            
+            if (isLandscape) {
+                block_y = pos.y - (dim.h * (gp.cellSize + gp.gap)) / 2;
+            } else {
+                block_y = pos.y - (dim.h * (gp.cellSize + gp.gap)) - 40;
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            let pos = getMousePos(e);
+
+            if (gameState === "MENU") {
+                if (pos.x >= BTN_MENU_LANG.x && pos.x <= BTN_MENU_LANG.x + BTN_MENU_LANG.w && pos.y >= BTN_MENU_LANG.y && pos.y <= BTN_MENU_LANG.y + BTN_MENU_LANG.h) {
+                    currentLang = currentLang === "de" ? "en" : "de";
+                    saveGameData(); playSound(600, 0.1, 'sine'); return;
+                }
+                if (pos.x >= BTN_MENU_ORIENT.x && pos.x <= BTN_MENU_ORIENT.x + BTN_MENU_ORIENT.w && pos.y >= BTN_MENU_ORIENT.y && pos.y <= BTN_MENU_ORIENT.y + BTN_MENU_ORIENT.h) {
+                    isLandscape = !isLandscape;
+                    applyCanvasDimensions();
+                    saveGameData(); playSound(700, 0.15, 'sine'); return;
+                }
+                if (pos.x >= BTN_MENU_ADVENTURE.x && pos.x <= BTN_MENU_ADVENTURE.x + BTN_MENU_ADVENTURE.w && pos.y >= BTN_MENU_ADVENTURE.y && pos.y <= BTN_MENU_ADVENTURE.y + BTN_MENU_ADVENTURE.h) {
+                    gameState = "MAP"; mapPage = 0;
+                } else if (pos.x >= BTN_MENU_CLASSIC.x && pos.x <= BTN_MENU_CLASSIC.x + BTN_MENU_CLASSIC.w && pos.y >= BTN_MENU_CLASSIC.y && pos.y <= BTN_MENU_CLASSIC.y + BTN_MENU_CLASSIC.h) {
+                    startGameSession("CLASSIC");
+                } else if (pos.x >= BTN_MENU_ZEIT.x && pos.x <= BTN_MENU_ZEIT.x + BTN_MENU_ZEIT.w && pos.y >= BTN_MENU_ZEIT.y && pos.y <= BTN_MENU_ZEIT.y + BTN_MENU_ZEIT.h) {
+                    startGameSession("ZEIT");
+                } else if (pos.x >= BTN_MENU_SHOP.x && pos.x <= BTN_MENU_SHOP.x + BTN_MENU_SHOP.w && pos.y >= BTN_MENU_SHOP.y && pos.y <= BTN_MENU_SHOP.y + BTN_MENU_SHOP.h) {
+                    gameState = "SHOP"; shopTab = "skins"; shopPage = 0;
+                } else if (pos.x >= BTN_MENU_ACHIEVEMENTS.x && pos.x <= BTN_MENU_ACHIEVEMENTS.x + BTN_MENU_ACHIEVEMENTS.w && pos.y >= BTN_MENU_ACHIEVEMENTS.y && pos.y <= BTN_MENU_ACHIEVEMENTS.y + BTN_MENU_ACHIEVEMENTS.h) {
+                    gameState = "ACHIEVEMENTS"; achPage = 0;
+                } else if (pos.x >= BTN_MENU_DAILY.x && pos.x <= BTN_MENU_DAILY.x + BTN_MENU_DAILY.w && pos.y >= BTN_MENU_DAILY.y && pos.y <= BTN_MENU_DAILY.y + BTN_MENU_DAILY.h) {
+                    gameState = "WHEEL"; wheelResult = null; wheelSpinning = false;
+                } else {
+                    let cardX = 60, cardY = isLandscape ? 165 : 305;
+                    if (pos.x >= cardX + 45 && pos.x <= cardX + 220 && pos.y >= cardY + 110 && pos.y <= cardY + 130) {
+                        toggleBackgroundMusic();
+                    }
+                }
+            } else if (gameState === "ACHIEVEMENTS") {
+                if (pos.x >= BTN_BACK.x && pos.x <= BTN_BACK.x + BTN_BACK.w && pos.y >= BTN_BACK.y && pos.y <= BTN_BACK.y + BTN_BACK.h) {
+                    gameState = "MENU"; return;
+                }
+                let navY = isLandscape ? 520 : 1020;
+                let prevX = isLandscape ? 450 : 120;
+                let nextX = isLandscape ? 730 : 360;
+                if (pos.x >= prevX && pos.x <= prevX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                    if (achPage > 0) achPage--; playSound(500, 0.1, 'sine'); return;
+                }
+                if (pos.x >= nextX && pos.x <= nextX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                    let maxPages = Math.ceil(Object.keys(achievements).length / 6);
+                    if (achPage < maxPages - 1) achPage++; playSound(500, 0.1, 'sine'); return;
+                }
+                achievementRects.forEach(rect => {
+                    if (pos.x >= rect.x && pos.x <= rect.x + rect.w && pos.y >= rect.y && pos.y <= rect.y + rect.h) {
+                        if (rect.canClaim) {
+                            let ach = achievements[rect.key];
+                            ach.claimed = true;
+                            coins += ach.reward;
+                            saveGameData();
+                            playSound(950, 0.4, 'square');
+                            spawnParticles(rect.x + rect.w/2, rect.y + rect.h/2, 20, ["#FACC15", "#22C55E"]);
+                            addFloatingText(`+${ach.reward} COINS!`, canvas.width/2, rect.y, "#22C55E");
+                        }
+                    }
+                });
+            } else if (gameState === "WHEEL") {
+                if (pos.x >= BTN_BACK.x && pos.x <= BTN_BACK.x + BTN_BACK.w && pos.y >= BTN_BACK.y && pos.y <= BTN_BACK.y + BTN_BACK.h) {
+                    gameState = "MENU"; return;
+                }
+                let btnX = isLandscape ? 700 : 150;
+                let btnY = isLandscape ? 280 : 840;
+                let btnW = isLandscape ? 380 : 300;
+                if (canClaimDaily() && !wheelSpinning) {
+                    if (pos.x >= btnX && pos.x <= btnX + btnW && pos.y >= btnY && pos.y <= btnY + 65) {
+                        wheelSpinning = true; wheelResult = null; wheelVelocity = 0.35 + Math.random() * 0.25; playSound(450, 0.1, 'sine');
+                    }
+                }
+            } else if (gameState === "SHOP") {
+                if (pos.x >= BTN_BACK.x && pos.x <= BTN_BACK.x + BTN_BACK.w && pos.y >= BTN_BACK.y && pos.y <= BTN_BACK.y + BTN_BACK.h) {
+                    gameState = "MENU"; return;
+                }
+                let tabW = isLandscape ? 300 : 235;
+                let tab1X = isLandscape ? 320 : 50;
+                let tab2X = isLandscape ? 680 : 315;
+                if (pos.x >= tab1X && pos.x <= tab1X + tabW && pos.y >= 125 && pos.y <= 170) {
+                    shopTab = "skins"; shopPage = 0; playSound(500, 0.1, 'sine'); return;
+                }
+                if (pos.x >= tab2X && pos.x <= tab2X + tabW && pos.y >= 125 && pos.y <= 170) {
+                    shopTab = "upgrades"; shopPage = 0; playSound(500, 0.1, 'sine'); return;
+                }
+
+                if (shopTab === "skins") {
+                    let navY = isLandscape ? 535 : 1000;
+                    let prevX = isLandscape ? 450 : 120;
+                    let nextX = isLandscape ? 730 : 360;
+                    if (pos.x >= prevX && pos.x <= prevX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                        if (shopPage > 0) shopPage--; playSound(500, 0.1, 'sine'); return;
+                    }
+                    if (pos.x >= nextX && pos.x <= nextX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                        let maxPages = Math.ceil(Object.keys(THEME_PALETTES).length / 4);
+                        if (shopPage < maxPages - 1) shopPage++; playSound(500, 0.1, 'sine'); return;
+                    }
+                }
+
+                shopItemRects.forEach(item => {
+                    if (pos.x >= item.x && pos.x <= item.x + item.w && pos.y >= item.y && pos.y <= item.y + item.h) {
+                        if (item.type === "skin") {
+                            let themeKey = item.key;
+                            let theme = THEME_PALETTES[themeKey];
+                            if (unlockedThemes.includes(themeKey)) {
+                                activeThemeKey = themeKey; arcadeBlockColors = theme.colors; saveGameData(); playSound(500, 0.1, 'sine');
+                            } else {
+                                if (coins >= theme.cost) {
+                                    coins -= theme.cost; unlockedThemes.push(themeKey); activeThemeKey = themeKey; arcadeBlockColors = theme.colors; saveGameData();
+                                    playSound(900, 0.3, 'square'); addFloatingText(t("unlockedTheme"), canvas.width / 2, canvas.height / 2, "#22C55E");
+                                } else { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height / 2, "#EF4444"); }
+                            }
+                        } else if (item.type === "upgrade") {
+                            if (!shopUpgrades[item.key]) {
+                                if (coins >= item.cost) {
+                                    coins -= item.cost; shopUpgrades[item.key] = true; saveGameData();
+                                    playSound(900, 0.3, 'square'); addFloatingText(t("unlockedUpgrade"), canvas.width / 2, canvas.height / 2, "#22C55E");
+                                } else { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height / 2, "#EF4444"); }
+                            }
+                        }
+                    }
+                });
+            } else if (gameState === "MAP") {
+                if (pos.x >= BTN_BACK.x && pos.x <= BTN_BACK.x + BTN_BACK.w && pos.y >= BTN_BACK.y && pos.y <= BTN_BACK.y + BTN_BACK.h) {
+                    gameState = "MENU"; return;
+                }
+                let navY = isLandscape ? 500 : 915;
+                let prevX = isLandscape ? 450 : 120;
+                let nextX = isLandscape ? 730 : 360;
+                if (pos.x >= prevX && pos.x <= prevX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                    if (mapPage > 0) mapPage--; playSound(500, 0.1, 'sine'); return;
+                }
+                if (pos.x >= nextX && pos.x <= nextX + 120 && pos.y >= navY && pos.y <= navY + 45) {
+                    if (mapPage < 1) mapPage++; playSound(500, 0.1, 'sine'); return;
+                }
+
+                for (let r of mapRects) {
+                    if (pos.x >= r.x && pos.x <= r.x + r.w && pos.y >= r.y && pos.y <= r.y + r.h) {
+                        if (r.lvl <= maxAdvLevel) startGameSession("ADVENTURE", r.lvl);
+                    }
+                }
+            } else if (gameState === "GAME") {
+                if (levelComplete) {
+                    if (selectedAdvLevel < 30) startGameSession("ADVENTURE", selectedAdvLevel + 1); else gameState = "MAP"; return;
+                }
+                if (gameOver) {
+                    let dialogX = isLandscape ? 410 : 60;
+                    let dialogY = isLandscape ? 90 : 360;
+                    if (pos.x >= dialogX + 30 && pos.x <= dialogX + 450 && pos.y >= dialogY + 145 && pos.y <= dialogY + 205) { triggerRewardedAdForRevive(); return; }
+                    if (pos.x >= dialogX + 30 && pos.x <= dialogX + 450 && pos.y >= dialogY + 215 && pos.y <= dialogY + 270) {
+                        if (coins >= 100) { coins -= 100; revivePlayerAction(); } else { addFloatingText(t("noCoins"), canvas.width / 2, canvas.height / 2, "#EF4444"); } return;
+                    }
+                    if (pos.x >= dialogX + 30 && pos.x <= dialogX + 450 && pos.y >= dialogY + 280 && pos.y <= dialogY + 330) { startGameSession(currentMode, selectedAdvLevel); return; }
+                    return;
+                }
+
+                if (pos.x >= BTN_BACK.x && pos.x <= BTN_BACK.x + BTN_BACK.w && pos.y >= BTN_BACK.y && pos.y <= BTN_BACK.y + BTN_BACK.h) {
+                    gameState = currentMode === "ADVENTURE" ? "MAP" : "MENU"; return;
+                }
+
+                let boosterRects = getBoosterRects();
+                for (let b of boosterRects) {
+                    if (pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h) { executeBooster(b.type); return; }
+                }
+
+                let slotRects = getSlotRects();
+                for (let i = 0; i < 3; i++) {
+                    let slot = slotRects[i];
+                    if (pos.x >= slot.x && pos.x <= slot.x + slot.w && pos.y >= slot.y && pos.y <= slot.y + slot.h && current_blocks[i] !== null) {
+                        if (rotateModeActive) {
+                            current_blocks[i] = rotateShapeData(current_blocks[i]);
+                            rotateModeActive = false; playSound(400, 0.1, 'sine'); addFloatingText(t("rotatedText"), slot.x + slot.w/2, slot.y, "#FACC15");
+                        } else {
+                            selected_block_idx = i; dragging = true;
+                            updateDragPosition(pos, current_blocks[i]);
+                        }
+                    }
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (gameState !== "GAME" || !dragging || selected_block_idx === null) return;
+            let pos = getMousePos(e);
+            updateDragPosition(pos, current_blocks[selected_block_idx]);
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (gameState !== "GAME" || !dragging || selected_block_idx === null) return;
+            dragging = false;
+
+            let gp = getGridParams();
+            let gridCol = Math.round((block_x - gp.offsetX) / (gp.cellSize + gp.gap));
+            let gridRow = Math.round((block_y - gp.offsetY) / (gp.cellSize + gp.gap));
+
+            let b = current_blocks[selected_block_idx];
+            if (canPlace(b.shape, gridCol, gridRow)) {
+                placeBlock(b, gridCol, gridRow);
+                current_blocks[selected_block_idx] = null;
+                clearLines();
+                if (current_blocks.every(bl => bl === null)) generateNewBlocks();
+                if (checkGameOver() && !levelComplete) { gameOver = true; playSound(180, 0.4, 'square'); }
+            }
+            selected_block_idx = null;
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            let touch = e.touches[0];
+            canvas.dispatchEvent(new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY }));
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            let touch = e.touches[0];
+            canvas.dispatchEvent(new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY }));
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            canvas.dispatchEvent(new MouseEvent("mouseup", {}));
+            e.preventDefault();
+        }, { passive: false });
+
+        function gameLoop(timestamp) {
+            let dt = (timestamp - lastTime) / 1000.0;
+            lastTime = timestamp;
+            if (dt > 0.1) dt = 0.1;
+
+            if (gameState === "WHEEL" && wheelSpinning) {
+                wheelAngle += wheelVelocity;
+                wheelVelocity *= 0.975;
+                if (wheelVelocity < 0.002) {
+                    wheelVelocity = 0;
+                    wheelSpinning = false;
+                    
+                    let sliceAngle = (Math.PI * 2) / wheelSlices.length;
+                    let effectiveAngle = (2 * Math.PI - (wheelAngle % (Math.PI * 2))) % (Math.PI * 2);
+                    let winningIndex = Math.floor(effectiveAngle / sliceAngle) % wheelSlices.length;
+                    
+                    wheelBaseWin = wheelSlices[winningIndex];
+                    
+                    let diff = getDaysDiff(lastDailyClaim);
+                    if (diff === 1) dailyStreak++;
+                    else if (diff > 1) dailyStreak = 1;
+                    
+                    let multi = Math.min(dailyStreak, 7);
+                    wheelResult = wheelBaseWin * multi;
+
+                    coins += wheelResult;
+                    lastDailyClaim = new Date().toDateString();
+                    stats.wheelSpins++;
+                    saveGameData();
+                    playSound(950, 0.5, 'square');
+                    spawnParticles(canvas.width / 2, canvas.height / 2, 40, ["#FACC15", "#38BDF8", "#22C55E"], true);
+                }
+            }
+
+            if (gameState === "GAME" && (currentMode === "ZEIT" || (currentMode === "ADVENTURE" && advLevelType === "time")) && !gameOver && !levelComplete) {
+                timeLeft -= dt;
+                if (timeLeft <= 0) { timeLeft = 0; gameOver = true; playSound(180, 0.4, 'square'); }
+            }
+
+            updateEffects();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === "MENU") drawMainMenu();
+            else if (gameState === "WHEEL") drawWheelMenu();
+            else if (gameState === "SHOP") drawShopMenu();
+            else if (gameState === "ACHIEVEMENTS") drawAchievements();
+            else if (gameState === "MAP") drawAdventureMap();
+            else if (gameState === "GAME") drawGame();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        requestAnimationFrame((ts) => { lastTime = ts; gameLoop(ts); });
+    </script>
+
+</body>
+</html>
